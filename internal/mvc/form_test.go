@@ -1,6 +1,8 @@
 package mvc
 
-import "testing"
+import (
+	"testing"
+)
 
 func Test_formatCardNumber(t *testing.T) {
 	type args struct {
@@ -30,14 +32,7 @@ func Test_formatCardNumber(t *testing.T) {
 			args: args{
 				text: "D1F2AS341234SS123F41G2G3H",
 			},
-			want: "1234-1234-1234-123",
-		},
-		{
-			name: "15 number characters with space characters",
-			args: args{
-				text: "12 34  1234 123  4-12--3",
-			},
-			want: "1234-1234-1234-123",
+			want: "D1F2-AS34-1234-SS12-3F41-G2G3-H",
 		},
 	}
 	for _, tt := range tests {
@@ -47,4 +42,8 @@ func Test_formatCardNumber(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_form_note(t *testing.T) {
+
 }

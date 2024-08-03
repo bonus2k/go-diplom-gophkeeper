@@ -1,14 +1,16 @@
-package model
+package models
 
 import (
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type Noteable interface {
 	GetName() string
 	GetType() TypeNote
-	String() string
+	Print() string
 }
 
 type TypeNote string
@@ -25,10 +27,11 @@ const (
 )
 
 type BaseNote struct {
-	NameRecord string   `json:"name_record"`
-	Created    int64    `json:"created"`
-	Type       TypeNote `json:"type"`
-	MetaInfo   []string `json:"meta_info,omitempty"`
+	Id         uuid.UUID `json:"id"`
+	NameRecord string    `json:"name_record"`
+	Created    int64     `json:"created"`
+	Type       TypeNote  `json:"type"`
+	MetaInfo   []string  `json:"meta_info,omitempty"`
 }
 
 type CredentialNote struct {
@@ -37,7 +40,7 @@ type CredentialNote struct {
 	BaseNote `json:"data"`
 }
 
-func (cn CredentialNote) String() string {
+func (cn CredentialNote) Print() string {
 	var str string
 	str += "Note: " + cn.NameRecord + "\n"
 	str += "Username: " + cn.Username + "\n"
@@ -60,7 +63,7 @@ type TextNote struct {
 	BaseNote `json:"data"`
 }
 
-func (tn TextNote) String() string {
+func (tn TextNote) Print() string {
 	var str string
 	str += "Note: " + tn.NameRecord + "\n"
 	str += "Text: " + tn.Text + "\n"
@@ -82,7 +85,7 @@ type BinaryNote struct {
 	BaseNote `json:"data"`
 }
 
-func (bn BinaryNote) String() string {
+func (bn BinaryNote) Print() string {
 	var str string
 	str += "Note: " + bn.NameRecord + "\n"
 	str += "Binary: " + string(bn.Binary) + "\n"
@@ -108,7 +111,7 @@ type BankCardNote struct {
 	BaseNote     `json:"data"`
 }
 
-func (bnc BankCardNote) String() string {
+func (bnc BankCardNote) Print() string {
 	var str string
 	str += "Note: " + bnc.NameRecord + "\n"
 	str += "Bank name: " + bnc.Bank + "\n"

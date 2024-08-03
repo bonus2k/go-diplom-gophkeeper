@@ -1,4 +1,4 @@
-package model
+package models
 
 type NoteDto struct {
 	Name       string       `json:"name"`
