@@ -32,8 +32,8 @@ var (
 
 	list1     = []models.SecretData{secretData1, secretData2}
 	list2     = []models.SecretData{secretData3}
-	testUser1 = models.User{ID: uidU1, Username: "Test User", Password: "Test Password", Email: "user1@test.com", CreatedAt: &tnow, UpdatedAt: &tnow, SecretData: &list1}
-	testUser2 = models.User{ID: uidU2, Username: "Test User", Password: "Test Password", Email: "user2@test.com", CreatedAt: &tnow, UpdatedAt: &tnow, SecretData: &list2}
+	testUser1 = models.User{ID: uidU1, Username: "Test User", Password: []byte("Test Password"), Email: "user1@test.com", CreatedAt: &tnow, UpdatedAt: &tnow, SecretData: &list1}
+	testUser2 = models.User{ID: uidU2, Username: "Test User", Password: []byte("Test Password"), Email: "user2@test.com", CreatedAt: &tnow, UpdatedAt: &tnow, SecretData: &list2}
 )
 
 func TestMain(m *testing.M) {
@@ -45,7 +45,7 @@ func TestMain(m *testing.M) {
 	l := logrus.New()
 	log = logger.NewLogger(l)
 	tnow = time.Now()
-	testDs = NewDataStore(log, db)
+	testDs = *NewDataStore(log, db)
 	err = testDs.Migrate()
 	if err != nil {
 		log.Fatal("failed to migrate database", err)
@@ -150,14 +150,14 @@ func TestDataStore_AddUser(t *testing.T) {
 				user: &models.User{
 					ID:       id2,
 					Username: "Test User",
-					Password: "Test Password",
+					Password: []byte("Test Password"),
 					Email:    "testt@test.com",
 				},
 			},
 			want: &models.User{
 				ID:         id2,
 				Username:   "Test User",
-				Password:   "Test Password",
+				Password:   []byte("Test Password"),
 				Email:      "testt@test.com",
 				SecretData: nil,
 			},
@@ -170,7 +170,7 @@ func TestDataStore_AddUser(t *testing.T) {
 				user: &models.User{
 					ID:       uidU1,
 					Username: "Test User",
-					Password: "Test Password",
+					Password: []byte("Test Password"),
 					Email:    "test1@test.com",
 				},
 			},
@@ -184,14 +184,14 @@ func TestDataStore_AddUser(t *testing.T) {
 				user: &models.User{
 					ID:       id1,
 					Username: "Test User",
-					Password: "Test Password",
+					Password: []byte("Test Password"),
 					Email:    "user1@test.com",
 				},
 			},
 			want: &models.User{
 				ID:         id1,
 				Username:   "Test User",
-				Password:   "Test Password",
+				Password:   []byte("Test Password"),
 				Email:      "test@test.com",
 				SecretData: nil,
 			},
@@ -434,13 +434,13 @@ func TestDataStore_UpdateUser(t *testing.T) {
 				ctx: addContext(context.Background(), uuid.New()),
 				user: models.User{
 					ID:       uidU2,
-					Password: "Test Password23",
+					Password: []byte("Test Password23"),
 				},
 			},
 			want: &models.User{
 				ID:       uidU2,
 				Username: "Test User",
-				Password: "Test Password23",
+				Password: []byte("Test Password23"),
 				Email:    "user2@test.com",
 			},
 			wantErr: false,
@@ -457,7 +457,7 @@ func TestDataStore_UpdateUser(t *testing.T) {
 			want: &models.User{
 				ID:       uidU2,
 				Username: "User2",
-				Password: "Test Password23",
+				Password: []byte("Test Password23"),
 				Email:    "user2@test.com",
 			},
 			wantErr: false,
@@ -469,7 +469,7 @@ func TestDataStore_UpdateUser(t *testing.T) {
 				user: models.User{
 					ID:         uidU2,
 					Username:   "Test User2",
-					Password:   "Test Password2",
+					Password:   []byte("Test Password2"),
 					Email:      "user22@test.com",
 					SecretData: &list2,
 				},
@@ -477,7 +477,7 @@ func TestDataStore_UpdateUser(t *testing.T) {
 			want: &models.User{
 				ID:         uidU2,
 				Username:   "Test User2",
-				Password:   "Test Password2",
+				Password:   []byte("Test Password2"),
 				Email:      "user2@test.com",
 				SecretData: &list2,
 			},
@@ -490,7 +490,7 @@ func TestDataStore_UpdateUser(t *testing.T) {
 				user: models.User{
 					ID:         uuid.New(),
 					Username:   "Test User2",
-					Password:   "Test Password2",
+					Password:   []byte("Test Password2"),
 					Email:      "user22@test.com",
 					SecretData: &list2,
 				},
@@ -608,7 +608,7 @@ func TestDataStore_DeleteUser(t *testing.T) {
 }
 
 func addContext(ctx context.Context, userId uuid.UUID) context.Context {
-	return context.WithValue(ctx, "UserCtx", models.UserCtx{
+	return context.WithValue(ctx, "UserCtx", &models.UserCtx{
 		Username: "Test",
 		Email:    "test@test.com",
 		Id:       userId,

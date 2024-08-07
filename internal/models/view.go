@@ -10,6 +10,7 @@ import (
 type Noteable interface {
 	GetName() string
 	GetType() TypeNote
+	GetId() uuid.UUID
 	Print() string
 }
 
@@ -58,6 +59,10 @@ func (cn CredentialNote) GetType() TypeNote {
 	return CREDENTIAL
 }
 
+func (cn CredentialNote) GetId() uuid.UUID {
+	return cn.Id
+}
+
 type TextNote struct {
 	Text     string `json:"text"`
 	BaseNote `json:"data"`
@@ -80,6 +85,10 @@ func (tn TextNote) GetType() TypeNote {
 	return TEXT
 }
 
+func (tn TextNote) GetId() uuid.UUID {
+	return tn.Id
+}
+
 type BinaryNote struct {
 	Binary   []byte `json:"binary"`
 	BaseNote `json:"data"`
@@ -100,6 +109,10 @@ func (bn BinaryNote) GetName() string {
 
 func (bn BinaryNote) GetType() TypeNote {
 	return BINARY
+}
+
+func (bn BinaryNote) GetId() uuid.UUID {
+	return bn.Id
 }
 
 type BankCardNote struct {
@@ -130,4 +143,8 @@ func (bnc BankCardNote) GetName() string {
 
 func (bnc BankCardNote) GetType() TypeNote {
 	return CARD
+}
+
+func (bnc BankCardNote) GetId() uuid.UUID {
+	return bnc.Id
 }

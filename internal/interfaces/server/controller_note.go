@@ -10,10 +10,13 @@ import (
 	pb "github.com/bonus2k/go-diplom-gophkeeper/internal/interfaces/proto"
 	"github.com/bonus2k/go-diplom-gophkeeper/internal/logger"
 	"github.com/bonus2k/go-diplom-gophkeeper/internal/models"
+	"github.com/bonus2k/go-diplom-gophkeeper/internal/services/auth_service"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
 
@@ -21,6 +24,7 @@ var (
 	log  *logger.Logger
 	once sync.Once
 	cs   *Controller
+	as   auth_service.AuthService
 )
 
 type Controller struct {
@@ -29,16 +33,17 @@ type Controller struct {
 	db database.DataStorable
 }
 
-func NewController(logger *logger.Logger, db database.DataStorable) *Controller {
+func NewController(logger *logger.Logger, db database.DataStorable, authService auth_service.AuthService) *Controller {
 	once.Do(func() {
 		log = logger
+		as = authService
 		cs = &Controller{db: db}
 	})
 	return cs
 }
 
 func (s *Controller) AddNote(ctx context.Context, note *pb.Note) (*empty.Empty, error) {
-	userCtx, ok := ctx.Value("UserCtx").(models.UserCtx)
+	userCtx, ok := ctx.Value("UserCtx").(*models.UserCtx)
 	if !ok {
 		return nil, status.Error(codes.Internal, "User not found")
 	}
@@ -49,15 +54,17 @@ func (s *Controller) AddNote(ctx context.Context, note *pb.Note) (*empty.Empty, 
 
 	sd, err := interfaces.DtoToEntity(note)
 	if err != nil {
+		log.Error(err.Error())
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+	sd.UserID = userCtx.Id
+
+	_, err = s.db.AddSecretData(ctx, sd)
+	if err != nil {
 		if errors.Is(err, database.ErrUserNotFound) {
 			log.Warn("Context not found")
 			return nil, status.Error(codes.Unauthenticated, "User not authenticated")
 		}
-		log.Error(err.Error())
-		return nil, status.Error(codes.InvalidArgument, err.Error())
-	}
-	_, err = s.db.AddSecretData(ctx, sd)
-	if err != nil {
 		log.Error(err.Error())
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -65,7 +72,7 @@ func (s *Controller) AddNote(ctx context.Context, note *pb.Note) (*empty.Empty, 
 }
 
 func (s *Controller) DeleteNote(ctx context.Context, req *pb.NoteRequest) (*empty.Empty, error) {
-	userCtx, ok := ctx.Value("UserCtx").(models.UserCtx)
+	userCtx, ok := ctx.Value("UserCtx").(*models.UserCtx)
 	if !ok {
 		return nil, status.Error(codes.Internal, "User not found")
 	}
@@ -97,7 +104,7 @@ func (s *Controller) DeleteNote(ctx context.Context, req *pb.NoteRequest) (*empt
 }
 
 func (s *Controller) UpdateNote(ctx context.Context, note *pb.Note) (*empty.Empty, error) {
-	userCtx, ok := ctx.Value("UserCtx").(models.UserCtx)
+	userCtx, ok := ctx.Value("UserCtx").(*models.UserCtx)
 	if !ok {
 		return nil, status.Error(codes.Internal, "User not found")
 	}
@@ -124,8 +131,8 @@ func (s *Controller) UpdateNote(ctx context.Context, note *pb.Note) (*empty.Empt
 	return &empty.Empty{}, nil
 }
 
-func (s *Controller) GetNotes(ctx context.Context, req *pb.NoteRequest) (*pb.NoteList, error) {
-	userCtx, ok := ctx.Value("UserCtx").(models.UserCtx)
+func (s *Controller) GetNotes(ctx context.Context, _ *pb.NoteRequest) (*pb.NoteList, error) {
+	userCtx, ok := ctx.Value("UserCtx").(*models.UserCtx)
 	if !ok {
 		return nil, status.Error(codes.Internal, "User not found")
 	}
@@ -154,4 +161,26 @@ func (s *Controller) GetNotes(ctx context.Context, req *pb.NoteRequest) (*pb.Not
 		)
 	}
 	return &pb.NoteList{Notes: notes}, nil
+}
+
+func TokenInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	if info.FullMethod == pb.UserServices_Register_FullMethodName ||
+		info.FullMethod == pb.UserServices_Login_FullMethodName {
+		return handler(ctx, req)
+	}
+	var token string
+	if md, ok := metadata.FromIncomingContext(ctx); ok {
+		values := md.Get("token")
+		if len(values) > 0 {
+			token = values[0]
+		}
+	}
+	if len(token) == 0 {
+		return nil, status.Error(codes.Unauthenticated, "missing token")
+	}
+	userCtx, err := as.CreateUserCtx(token)
+	if err != nil {
+		return nil, status.Error(codes.Unauthenticated, "invalid token")
+	}
+	return handler(context.WithValue(ctx, "UserCtx", userCtx), req)
 }

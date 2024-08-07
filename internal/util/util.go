@@ -8,6 +8,8 @@ import (
 	"encoding/base64"
 
 	"github.com/bonus2k/go-diplom-gophkeeper/internal/logger"
+	"github.com/bonus2k/go-diplom-gophkeeper/internal/models"
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
 
@@ -76,4 +78,12 @@ func generateRandom(size int) ([]byte, error) {
 		return nil, err
 	}
 	return b, nil
+}
+
+func AddContextUserCtx(ctx context.Context, username string, email string, id uuid.UUID) context.Context {
+	return context.WithValue(ctx, "UserCtx", &models.UserCtx{
+		Username: username,
+		Email:    email,
+		Id:       id,
+	})
 }

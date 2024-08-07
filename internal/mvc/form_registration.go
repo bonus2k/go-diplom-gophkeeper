@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/mail"
 
-	"github.com/bonus2k/go-diplom-gophkeeper/internal/models"
+	pb "github.com/bonus2k/go-diplom-gophkeeper/internal/interfaces/proto"
 	"github.com/rivo/tview"
 )
 
@@ -12,8 +12,8 @@ var (
 	formRegistrationUser = tview.NewForm()
 )
 
-func addNewUser(cu *ControllerUI) {
-	user := models.UserDto{}
+func createFormRegistrationUser(cu *UIController) {
+	user := &pb.User{}
 	var password string
 	formRegistrationUser.AddInputField("Username", "", 40,
 		nil,
@@ -29,44 +29,49 @@ func addNewUser(cu *ControllerUI) {
 
 	formRegistrationUser.AddButton("Save", func() {
 		if validateUser(user, password) {
-			//TODO add register func
-			cu.AddItemInfoList(fmt.Sprintf("The data of the user(%s) has been sent for registration. Pleas wait", user.Username))
-			pagesMenu.SwitchToPage("Menu")
+			user.Password = password
+			err := cu.sn.Register(user)
+			if err != nil {
+				createModalError(err, PageRegistrationUser)
+				return
+			}
+			cu.AddItemInfoList(fmt.Sprintf("The user: %s registered successful", user.Username))
+			pagesMenu.SwitchToPage(PageMenu)
 		}
 	})
 
 	formRegistrationUser.AddButton("Back", func() {
-		pagesMenu.SwitchToPage("Menu")
+		pagesMenu.SwitchToPage(PageMenu)
 	})
 	formRegistrationUser.SetBorder(true).SetTitle("Registration").SetTitleAlign(tview.AlignLeft)
 }
 
-func validateUser(user models.UserDto, password string) bool {
+func validateUser(user *pb.User, password string) bool {
 	modalError.
 		ClearButtons().
 		AddButtons([]string{"OK"}).
 		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
 			if buttonLabel == "OK" {
-				pagesMenu.SwitchToPage("Registration User")
+				pagesMenu.SwitchToPage(PageRegistrationUser)
 			}
 		}).SetTitle("Error")
 
 	if user.Password != password {
 		modalError.
 			SetText("The passwords not equal")
-		pagesMenu.SwitchToPage("Error")
+		pagesMenu.SwitchToPage(PageError)
 	} else if len(user.Password) < 8 {
 		modalError.
 			SetText("Password must be at least 8 characters")
-		pagesMenu.SwitchToPage("Error")
+		pagesMenu.SwitchToPage(PageError)
 	} else if _, err := mail.ParseAddress(user.Email); err != nil {
 		modalError.
 			SetText("Email address not valid")
-		pagesMenu.SwitchToPage("Error")
+		pagesMenu.SwitchToPage(PageError)
 	} else if len(user.Username) < 5 {
 		modalError.
 			SetText("Username must be at least 5 characters")
-		pagesMenu.SwitchToPage("Error")
+		pagesMenu.SwitchToPage(PageError)
 	} else {
 		return true
 	}

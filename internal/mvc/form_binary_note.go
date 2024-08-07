@@ -2,6 +2,7 @@ package mvc
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/bonus2k/go-diplom-gophkeeper/internal/models"
@@ -13,31 +14,57 @@ var (
 	formBinaryNote = tview.NewForm()
 )
 
-func addBinaryNote(cu *ControllerUI) {
-	note := models.BinaryNote{}
-	note.Id, _ = uuid.NewUUID()
-	note.Type = models.BINARY
-	note.Created = time.Now().Unix()
+func createFormBinaryNote(cu *UIController, note models.BinaryNote) {
+	formBinaryNote.Clear(true)
 	var metaInfo string
 	var textArea string
-	formBinaryNote.AddTextArea("Binary data", "", 40, 0, 0,
+	formBinaryNote.AddTextArea("Binary data", string(note.Binary), 40, 0, 0,
 		func(text string) { textArea = text })
-	formBinaryNote.AddTextArea("Additional information", "", 40, 0, 0,
+	formBinaryNote.AddTextArea("Additional information", strings.Join(note.MetaInfo, "\n"), 40, 0, 0,
 		func(text string) { metaInfo = text })
-	formBinaryNote.AddInputField("Save as", "", 40,
+	formBinaryNote.AddInputField("Save as", note.NameRecord, 40,
 		nil,
 		func(text string) { note.NameRecord = text })
 
 	formBinaryNote.AddButton("Save", func() {
-		note.MetaInfo = append(note.MetaInfo, metaInfo)
-		note.Binary = []byte(textArea)
+		if note.Id == uuid.Nil {
+			note.Id, _ = uuid.NewUUID()
+		}
+		if note.Created == 0 {
+			note.Created = time.Now().Unix()
+		}
+		if metaInfo != "" {
+			note.MetaInfo = strings.Split(metaInfo, "\n")
+		}
+		if textArea != "" {
+			note.Binary = []byte(textArea)
+		}
+		note.Type = models.BINARY
+		err := cu.AddNote(&note)
+		if err != nil {
+			createModalError(err, PageFormBinaryNote)
+			return
+		}
 		cu.AddItemInfoList(fmt.Sprintf("The note has been saved with the binary data: %s", note.NameRecord))
-		cu.AddNote(&note)
-		pagesMenu.SwitchToPage("Menu")
+		pagesMenu.SwitchToPage(PageMenu)
 	})
 
 	formBinaryNote.AddButton("Back", func() {
-		pagesMenu.SwitchToPage("Menu")
+		pagesMenu.SwitchToPage(PageMenu)
+	})
+
+	formTextNote.AddButton("Delete", func() {
+		if note.Id == uuid.Nil {
+			pagesMenu.SwitchToPage(PageMenu)
+			return
+		}
+		err := cu.DeleteNote(note.Id)
+		if err != nil {
+			createModalError(err, PageFormBinaryNote)
+			return
+		}
+		cu.AddItemInfoList(fmt.Sprintf("The note has been deleted:  %s", note.NameRecord))
+		pagesMenu.SwitchToPage(PageMenu)
 	})
 	formBinaryNote.SetBorder(true).SetTitle("New binary note").SetTitleAlign(tview.AlignLeft)
 }

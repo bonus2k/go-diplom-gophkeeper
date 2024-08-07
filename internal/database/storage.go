@@ -36,12 +36,12 @@ type DataStore struct {
 	db *gorm.DB
 }
 
-func NewDataStore(logger *logger.Logger, db *gorm.DB) DataStorable {
+func NewDataStore(logger *logger.Logger, db *gorm.DB) *DataStorable {
 	once.Do(func() {
 		log = logger
 		ds = &DataStore{db: db}
 	})
-	return ds
+	return &ds
 }
 
 func (ds *DataStore) Migrate() error {
@@ -52,10 +52,13 @@ func (ds *DataStore) Migrate() error {
 func (ds *DataStore) AddUser(ctx context.Context, user *models.User) (*models.User, error) {
 	log := log.WithFields(logrus.Fields{
 		"method": "AddUser",
-		"user":   ctx.Value("UserCtx").(models.UserCtx).Email,
+		"user":   ctx.Value("UserCtx").(*models.UserCtx).Email,
 	})
 
 	log.Info("adding user")
+	if user.ID == uuid.Nil {
+		user.ID = uuid.New()
+	}
 	tx := ds.db.Create(&user)
 	if err := tx.Error; err != nil {
 		log.Error(err.Error())
@@ -67,7 +70,7 @@ func (ds *DataStore) AddUser(ctx context.Context, user *models.User) (*models.Us
 func (ds *DataStore) GetUser(ctx context.Context, email string) (*models.User, error) {
 	log := log.WithFields(logrus.Fields{
 		"method": "GetUser",
-		"user":   ctx.Value("UserCtx").(models.UserCtx).Email,
+		"user":   ctx.Value("UserCtx").(*models.UserCtx).Email,
 	})
 
 	log.Info("getting user")
@@ -83,7 +86,7 @@ func (ds *DataStore) GetUser(ctx context.Context, email string) (*models.User, e
 func (ds *DataStore) DeleteUser(ctx context.Context, email string) (bool, error) {
 	log := log.WithFields(logrus.Fields{
 		"method": "DeleteUser",
-		"user":   ctx.Value("UserCtx").(models.UserCtx).Email,
+		"user":   ctx.Value("UserCtx").(*models.UserCtx).Email,
 	})
 
 	log.Info("deleting user")
@@ -98,7 +101,7 @@ func (ds *DataStore) DeleteUser(ctx context.Context, email string) (bool, error)
 func (ds *DataStore) UpdateUser(ctx context.Context, user models.User) (*models.User, error) {
 	log := log.WithFields(logrus.Fields{
 		"method": "UpdateUser",
-		"user":   ctx.Value("UserCtx").(models.UserCtx).Email,
+		"user":   ctx.Value("UserCtx").(*models.UserCtx).Email,
 	})
 
 	param := make(map[string]interface{})
@@ -106,7 +109,7 @@ func (ds *DataStore) UpdateUser(ctx context.Context, user models.User) (*models.
 	if user.Username != "" {
 		param["username"] = user.Username
 	}
-	if user.Password != "" {
+	if user.Password != nil {
 		param["password"] = user.Password
 	}
 
@@ -120,7 +123,7 @@ func (ds *DataStore) UpdateUser(ctx context.Context, user models.User) (*models.
 }
 
 func (ds *DataStore) AddSecretData(ctx context.Context, data models.SecretData) (*models.SecretData, error) {
-	userCtx, ok := ctx.Value("UserCtx").(models.UserCtx)
+	userCtx, ok := ctx.Value("UserCtx").(*models.UserCtx)
 	if !ok {
 		return nil, ErrUserNotFound
 	}
@@ -139,7 +142,7 @@ func (ds *DataStore) AddSecretData(ctx context.Context, data models.SecretData) 
 }
 
 func (ds *DataStore) GetSecretData(ctx context.Context) (*[]models.SecretData, error) {
-	userCtx, ok := ctx.Value("UserCtx").(models.UserCtx)
+	userCtx, ok := ctx.Value("UserCtx").(*models.UserCtx)
 	if !ok {
 		return nil, ErrUserNotFound
 	}
@@ -159,7 +162,7 @@ func (ds *DataStore) GetSecretData(ctx context.Context) (*[]models.SecretData, e
 }
 
 func (ds *DataStore) UpdateSecretData(ctx context.Context, data models.SecretData) (*models.SecretData, error) {
-	userCtx, ok := ctx.Value("UserCtx").(models.UserCtx)
+	userCtx, ok := ctx.Value("UserCtx").(*models.UserCtx)
 	if !ok {
 		return nil, ErrUserNotFound
 	}
@@ -188,7 +191,7 @@ func (ds *DataStore) UpdateSecretData(ctx context.Context, data models.SecretDat
 }
 
 func (ds *DataStore) DeleteSecretData(ctx context.Context, idSecretData uuid.UUID) (bool, error) {
-	userCtx, ok := ctx.Value("UserCtx").(models.UserCtx)
+	userCtx, ok := ctx.Value("UserCtx").(*models.UserCtx)
 	if !ok {
 		return false, ErrUserNotFound
 	}

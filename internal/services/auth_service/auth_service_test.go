@@ -21,7 +21,7 @@ import (
 
 var (
 	uidU1     = uuid.New()
-	testUser1 = models.User{ID: uidU1, Username: "Test User", Password: "Test Password", Email: "user1@test.com"}
+	testUser1 = models.User{ID: uidU1, Username: "Test User", Password: []byte([]byte("Test Password")), Email: "user1@test.com"}
 )
 
 func TestMain(m *testing.M) {
