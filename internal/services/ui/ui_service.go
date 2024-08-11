@@ -1,4 +1,4 @@
-package note_service
+package ui
 
 import (
 	"context"
@@ -22,10 +22,10 @@ import (
 var (
 	once sync.Once
 	log  *logger.Logger
-	sn   *UIService
+	sn   *Service
 )
 
-type UIService struct {
+type Service struct {
 	storage map[uuid.UUID]*models.Noteable
 	uc      pb.UserServicesClient
 	nc      pb.NoteServicesClient
@@ -33,15 +33,15 @@ type UIService struct {
 	hash    []byte
 }
 
-func NewUIService(logger *logger.Logger, conn *grpc.ClientConn) *UIService {
+func NewUIService(logger *logger.Logger, conn *grpc.ClientConn) *Service {
 	once.Do(func() {
 		log = logger
-		sn = &UIService{storage: make(map[uuid.UUID]*models.Noteable), uc: pb.NewUserServicesClient(conn), nc: pb.NewNoteServicesClient(conn)}
+		sn = &Service{storage: make(map[uuid.UUID]*models.Noteable), uc: pb.NewUserServicesClient(conn), nc: pb.NewNoteServicesClient(conn)}
 	})
 	return sn
 }
 
-func (cn *UIService) AddNote(note models.Noteable) (*[]models.Noteable, error) {
+func (cn *Service) AddNote(note models.Noteable) (*[]models.Noteable, error) {
 	log := log.WithFields(logrus.Fields{
 		"method": "AddNote",
 	})
@@ -66,14 +66,14 @@ func (cn *UIService) AddNote(note models.Noteable) (*[]models.Noteable, error) {
 	}
 
 	noteDto := &pb.Note{
-		Id:         note.GetId().String(),
+		Id:         note.GetID().String(),
 		Name:       note.GetName(),
 		Type:       note.GetType().String(),
 		SecretData: encrypt,
 	}
 
 	ctx = cn.addToken(ctx)
-	switch _, ok := cn.storage[note.GetId()]; ok {
+	switch _, ok := cn.storage[note.GetID()]; ok {
 	case true:
 		_, err = cn.nc.UpdateNote(ctx, noteDto)
 		if err != nil {
@@ -88,12 +88,12 @@ func (cn *UIService) AddNote(note models.Noteable) (*[]models.Noteable, error) {
 		}
 	}
 
-	cn.storage[note.GetId()] = &note
+	cn.storage[note.GetID()] = &note
 	log.WithField("note", note.GetName()).Info("Added note")
 	return toNotableList(cn.storage), nil
 }
 
-func (cn *UIService) LoadNote() (*[]models.Noteable, error) {
+func (cn *Service) LoadNote() (*[]models.Noteable, error) {
 	log := log.WithFields(logrus.Fields{
 		"method": "AddNote",
 	})
@@ -116,13 +116,13 @@ func (cn *UIService) LoadNote() (*[]models.Noteable, error) {
 			log.WithError(err).Error("Error unmarshalling note")
 			continue
 		}
-		cn.storage[note.GetId()] = &note
+		cn.storage[note.GetID()] = &note
 	}
 
 	return toNotableList(cn.storage), nil
 }
 
-func (cn *UIService) DeleteNote(id uuid.UUID) (*[]models.Noteable, error) {
+func (cn *Service) DeleteNote(id uuid.UUID) (*[]models.Noteable, error) {
 	log := log.WithFields(logrus.Fields{
 		"method": "DeleteNote",
 	})
@@ -144,7 +144,7 @@ func (cn *UIService) DeleteNote(id uuid.UUID) (*[]models.Noteable, error) {
 	return toNotableList(cn.storage), nil
 }
 
-func (cn *UIService) Register(user *pb.User) error {
+func (cn *Service) Register(user *pb.User) error {
 	log := log.WithFields(logrus.Fields{
 		"method": "Register",
 	})
@@ -156,11 +156,11 @@ func (cn *UIService) Register(user *pb.User) error {
 	}
 	cn.jwt = token.Token
 	cn.hash = getHash(user)
-	log.Infof("registered new user: %s", user)
+	log.Infof("registered new user: %s, %s", user.Username, user.Email)
 	return nil
 }
 
-func (cn *UIService) Login(user *pb.User) error {
+func (cn *Service) Login(user *pb.User) error {
 	log := log.WithFields(logrus.Fields{
 		"method": "Login",
 	})
@@ -181,14 +181,14 @@ func getHash(user *pb.User) []byte {
 	return bytes[:]
 }
 
-func (cn *UIService) addToken(ctx context.Context) context.Context {
+func (cn *Service) addToken(ctx context.Context) context.Context {
 	md := metadata.New(map[string]string{"token": cn.jwt})
 	return metadata.NewOutgoingContext(ctx, md)
 
 }
 
 func toNotableList(notes map[uuid.UUID]*models.Noteable) *[]models.Noteable {
-	var l []models.Noteable
+	l := make([]models.Noteable, 0, len(notes))
 	for _, u := range notes {
 		l = append(l, *u)
 	}

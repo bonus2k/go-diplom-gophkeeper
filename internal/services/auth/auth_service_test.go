@@ -1,4 +1,4 @@
-package auth_service
+package auth
 
 import (
 	"crypto/rand"
@@ -33,7 +33,7 @@ func TestMain(m *testing.M) {
 	blocks, _ := pem.Decode(pemBytes)
 	key, err := x509.ParsePKCS1PrivateKey(blocks.Bytes)
 
-	as = &AuthService{
+	as = &Service{
 		privateKey: key,
 		publicKey:  &privateKey.PublicKey,
 	}

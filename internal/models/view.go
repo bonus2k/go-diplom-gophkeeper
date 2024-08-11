@@ -10,7 +10,7 @@ import (
 type Noteable interface {
 	GetName() string
 	GetType() TypeNote
-	GetId() uuid.UUID
+	GetID() uuid.UUID
 	Print() string
 }
 
@@ -59,7 +59,7 @@ func (cn CredentialNote) GetType() TypeNote {
 	return CREDENTIAL
 }
 
-func (cn CredentialNote) GetId() uuid.UUID {
+func (cn CredentialNote) GetID() uuid.UUID {
 	return cn.Id
 }
 
@@ -85,7 +85,7 @@ func (tn TextNote) GetType() TypeNote {
 	return TEXT
 }
 
-func (tn TextNote) GetId() uuid.UUID {
+func (tn TextNote) GetID() uuid.UUID {
 	return tn.Id
 }
 
@@ -111,7 +111,7 @@ func (bn BinaryNote) GetType() TypeNote {
 	return BINARY
 }
 
-func (bn BinaryNote) GetId() uuid.UUID {
+func (bn BinaryNote) GetID() uuid.UUID {
 	return bn.Id
 }
 
@@ -145,6 +145,6 @@ func (bnc BankCardNote) GetType() TypeNote {
 	return CARD
 }
 
-func (bnc BankCardNote) GetId() uuid.UUID {
+func (bnc BankCardNote) GetID() uuid.UUID {
 	return bnc.Id
 }

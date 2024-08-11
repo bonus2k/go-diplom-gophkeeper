@@ -14,7 +14,7 @@ import (
 )
 
 func Encrypt(ctx context.Context, key []byte, data []byte) ([]byte, error) {
-	log := logger.LoggerFromContext(ctx).WithFields(logrus.Fields{
+	log := logger.FromContext(ctx).WithFields(logrus.Fields{
 		"method": "Encrypt",
 		"key":    base64.StdEncoding.EncodeToString(key[len(key)-5:]),
 	})
@@ -43,7 +43,7 @@ func Encrypt(ctx context.Context, key []byte, data []byte) ([]byte, error) {
 }
 
 func Decrypt(ctx context.Context, key []byte, data []byte) ([]byte, error) {
-	log := logger.LoggerFromContext(ctx).WithFields(logrus.Fields{
+	log := logger.FromContext(ctx).WithFields(logrus.Fields{
 		"method": "Encrypt",
 		"key":    base64.StdEncoding.EncodeToString(key[len(key)-5:]),
 	})

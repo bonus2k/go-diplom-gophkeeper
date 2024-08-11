@@ -23,7 +23,7 @@ func (l *Logger) ContextWithLogger(ctx context.Context) context.Context {
 	return context.WithValue(ctx, Logger{}, l)
 }
 
-func LoggerFromContext(ctx context.Context) *Logger {
+func FromContext(ctx context.Context) *Logger {
 	if ll, ok := ctx.Value(Logger{}).(*Logger); ok {
 		return ll
 	}

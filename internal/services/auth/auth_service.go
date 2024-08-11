@@ -1,4 +1,4 @@
-package auth_service
+package auth
 
 import (
 	"crypto/rsa"
@@ -21,15 +21,15 @@ import (
 var (
 	once sync.Once
 	log  *logger.Logger
-	as   *AuthService
+	as   *Service
 )
 
-type AuthService struct {
+type Service struct {
 	privateKey *rsa.PrivateKey
 	publicKey  *rsa.PublicKey
 }
 
-func NewAuthService(logger *logger.Logger, pathPrivateKey string) (*AuthService, error) {
+func NewAuthService(logger *logger.Logger, pathPrivateKey string) (*Service, error) {
 	cert, err := getFile(pathPrivateKey)
 	if err != nil {
 		return nil, err
@@ -42,12 +42,12 @@ func NewAuthService(logger *logger.Logger, pathPrivateKey string) (*AuthService,
 
 	once.Do(func() {
 		log = logger
-		as = &AuthService{privateKey: key, publicKey: &key.PublicKey}
+		as = &Service{privateKey: key, publicKey: &key.PublicKey}
 	})
 	return as, nil
 }
 
-func (as *AuthService) CreateJwt(user *models.User) (string, error) {
+func (as *Service) CreateJwt(user *models.User) (string, error) {
 	log := log.WithFields(logrus.Fields{
 		"method": "CreateJwt",
 		"user":   user.Email,
@@ -69,7 +69,7 @@ func (as *AuthService) CreateJwt(user *models.User) (string, error) {
 	return signedToken, nil
 }
 
-func (as *AuthService) CreateUserCtx(token string) (*models.UserCtx, error) {
+func (as *Service) CreateUserCtx(token string) (*models.UserCtx, error) {
 	log := log.WithFields(logrus.Fields{
 		"method": "CreateJwt",
 		"token":  token[len(token)-5:],

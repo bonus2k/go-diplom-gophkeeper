@@ -25,7 +25,7 @@ func createFormAuthorization(cu *UIController) {
 			createModalError(err, PageSignIn)
 			return
 		}
-		cu.AddItemInfoList(fmt.Sprintf("Welcome back User!"))
+		cu.AddItemInfoList(fmt.Sprintf("Welcome back %s!", user.Username))
 		pagesMenu.SwitchToPage(PageMenu)
 
 	})

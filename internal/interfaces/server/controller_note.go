@@ -10,7 +10,7 @@ import (
 	pb "github.com/bonus2k/go-diplom-gophkeeper/internal/interfaces/proto"
 	"github.com/bonus2k/go-diplom-gophkeeper/internal/logger"
 	"github.com/bonus2k/go-diplom-gophkeeper/internal/models"
-	"github.com/bonus2k/go-diplom-gophkeeper/internal/services/auth_service"
+	"github.com/bonus2k/go-diplom-gophkeeper/internal/services/auth"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -24,7 +24,7 @@ var (
 	log  *logger.Logger
 	once sync.Once
 	cs   *Controller
-	as   auth_service.AuthService
+	as   auth.Service
 )
 
 type Controller struct {
@@ -33,7 +33,7 @@ type Controller struct {
 	db database.DataStorable
 }
 
-func NewController(logger *logger.Logger, db database.DataStorable, authService auth_service.AuthService) *Controller {
+func NewController(logger *logger.Logger, db database.DataStorable, authService auth.Service) *Controller {
 	once.Do(func() {
 		log = logger
 		as = authService

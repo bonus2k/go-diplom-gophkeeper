@@ -28,7 +28,11 @@ func createFormBinaryNote(cu *UIController, note models.BinaryNote) {
 
 	formBinaryNote.AddButton("Save", func() {
 		if note.Id == uuid.Nil {
-			note.Id, _ = uuid.NewUUID()
+			id, err := uuid.NewUUID()
+			if err != nil {
+				log.Fatal(err)
+			}
+			note.Id = id
 		}
 		if note.Created == 0 {
 			note.Created = time.Now().Unix()

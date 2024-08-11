@@ -41,7 +41,11 @@ func createFormBankCardNote(cu *UIController, note models.BankCardNote) {
 
 	formCardBankNote.AddButton("Save", func() {
 		if note.Id == uuid.Nil {
-			note.Id, _ = uuid.NewUUID()
+			id, err := uuid.NewUUID()
+			if err != nil {
+				log.Fatal(err)
+			}
+			note.Id = id
 		}
 		if note.Created == 0 {
 			note.Created = time.Now().Unix()

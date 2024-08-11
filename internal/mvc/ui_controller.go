@@ -7,7 +7,7 @@ import (
 
 	"github.com/bonus2k/go-diplom-gophkeeper/internal/logger"
 	"github.com/bonus2k/go-diplom-gophkeeper/internal/models"
-	"github.com/bonus2k/go-diplom-gophkeeper/internal/services/note_service"
+	"github.com/bonus2k/go-diplom-gophkeeper/internal/services/ui"
 	"github.com/gdamore/tcell/v2"
 	"github.com/google/uuid"
 	"github.com/rivo/tview"
@@ -28,7 +28,7 @@ var (
 
 type UIController struct {
 	infoList []string
-	sn       *note_service.UIService
+	sn       *ui.Service
 }
 
 const (
@@ -42,7 +42,7 @@ const (
 	PageSignIn           = "Sign in"
 )
 
-func NewUIController(logger *logger.Logger, serviceNote *note_service.UIService) *UIController {
+func NewUIController(logger *logger.Logger, serviceNote *ui.Service) *UIController {
 	once.Do(func() {
 		log = logger
 		log.Infof("controller UI initializing")
@@ -138,7 +138,6 @@ func createMainMenu() {
 	pagesMenu.AddPage(PageFormTextNote, createModalForm(formTextNote, 70, 19), true, false)
 	pagesMenu.AddPage(PageFormBinaryNote, createModalForm(formBinaryNote, 70, 19), true, false)
 	pagesMenu.AddPage(PageRegistrationUser, createModalForm(formRegistrationUser, 70, 13), true, false)
-	//pagesMenu.AddPage(PageShowNote, modalViewNote, true, false)
 	pagesMenu.AddPage(PageError, modalError, true, false)
 	pagesMenu.AddPage(PageSignIn, createModalForm(formAuthorization, 55, 10), true, false)
 }
@@ -165,7 +164,7 @@ func creteMainFlex() *tview.Flex {
 func createNotesList(storage []models.Noteable) {
 	notesList.Clear()
 
-	notesList.SetSelectedFunc(func(i int, s string, s2 string, r rune) {
+	notesList.SetSelectedFunc(func(i int, _ string, _ string, _ rune) {
 		switch note := storage[i].(type) {
 		case *models.BankCardNote:
 			createFormBankCardNote(cu, *note)
@@ -187,19 +186,6 @@ func createNotesList(storage []models.Noteable) {
 		notesList.AddItem(item, "", rune(49+i), nil)
 	}
 }
-
-//func createModalNote(note models.Noteable) {
-//	modalViewNote.ClearButtons()
-//	modalViewNote.
-//		SetText(note.Print()).
-//		AddButtons([]string{"OK"}).
-//		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
-//			if buttonLabel == "OK" {
-//				pagesMenu.SwitchToPage(PageMenu)
-//			}
-//		})
-//
-//}
 
 func createModalForm(p tview.Primitive, width, height int) tview.Primitive {
 	flex := tview.NewFlex()
@@ -223,7 +209,7 @@ func createModalError(err error, switchToPage string) {
 		SetText(fmt.Sprintf("Error: %s", err.Error())).
 		ClearButtons().
 		AddButtons([]string{"OK"}).
-		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+		SetDoneFunc(func(_ int, buttonLabel string) {
 			if buttonLabel == "OK" {
 				pagesMenu.SwitchToPage(switchToPage)
 			}
