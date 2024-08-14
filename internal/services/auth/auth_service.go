@@ -24,6 +24,11 @@ var (
 	as   *Service
 )
 
+type ServiceAuth interface {
+	CreateJwt(user *models.User) (string, error)
+	CreateUserCtx(token string) (*models.UserCtx, error)
+}
+
 type Service struct {
 	privateKey *rsa.PrivateKey
 	publicKey  *rsa.PublicKey
@@ -47,7 +52,7 @@ func NewAuthService(logger *logger.Logger, pathPrivateKey string) (*Service, err
 	return as, nil
 }
 
-func (as *Service) CreateJwt(user *models.User) (string, error) {
+func (as Service) CreateJwt(user *models.User) (string, error) {
 	log := log.WithFields(logrus.Fields{
 		"method": "CreateJwt",
 		"user":   user.Email,
@@ -69,7 +74,7 @@ func (as *Service) CreateJwt(user *models.User) (string, error) {
 	return signedToken, nil
 }
 
-func (as *Service) CreateUserCtx(token string) (*models.UserCtx, error) {
+func (as Service) CreateUserCtx(token string) (*models.UserCtx, error) {
 	log := log.WithFields(logrus.Fields{
 		"method": "CreateJwt",
 		"token":  token[len(token)-5:],

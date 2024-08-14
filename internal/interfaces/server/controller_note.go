@@ -24,7 +24,7 @@ var (
 	log  *logger.Logger
 	once sync.Once
 	cs   *Controller
-	as   auth.Service
+	as   auth.ServiceAuth
 )
 
 type Controller struct {
@@ -33,7 +33,7 @@ type Controller struct {
 	db database.DataStorable
 }
 
-func NewController(logger *logger.Logger, db database.DataStorable, authService auth.Service) *Controller {
+func NewController(logger *logger.Logger, db database.DataStorable, authService auth.ServiceAuth) *Controller {
 	once.Do(func() {
 		log = logger
 		as = authService

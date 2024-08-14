@@ -98,7 +98,7 @@ func (bn BinaryNote) Print() string {
 	var str string
 	str += "Note: " + bn.NameRecord + "\n"
 	str += "Binary: " + string(bn.Binary) + "\n"
-	str += "Additional information: \n" + strings.Join(bn.MetaInfo, "; ") + "\n"
+	str += "Additional information: " + strings.Join(bn.MetaInfo, "; ") + "\n"
 	str += "Created: " + time.Unix(bn.Created, 0).Format(time.RFC822) + "\n"
 	return str
 }

@@ -6,6 +6,9 @@ import (
 	"hash"
 	"reflect"
 	"testing"
+
+	"github.com/bonus2k/go-diplom-gophkeeper/internal/models"
+	"github.com/google/uuid"
 )
 
 func TestEncrypt(t *testing.T) {
@@ -119,4 +122,21 @@ func Test_generateRandom(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestAddContextUserCtx(t *testing.T) {
+
+	t.Run("UserCtx", func(t *testing.T) {
+		got := AddContextUserCtx(context.Background(), "username", "email", uuid.Nil)
+		userCtx := got.Value("UserCtx").(*models.UserCtx)
+		userWant := &models.UserCtx{
+			Username: "username",
+			Email:    "email",
+			Id:       uuid.Nil,
+		}
+		if !reflect.DeepEqual(userCtx, userWant) {
+			t.Errorf("AddContextUserCtx() = %v, want %v", userCtx, userWant)
+		}
+	})
+
 }
